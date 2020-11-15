@@ -2,16 +2,15 @@ import React, { useState } from 'react';
 import { Button, Form, Header, Segment } from 'semantic-ui-react';
 import cuid from 'cuid';
 import { Link } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { createEvent, updateEvent } from '../eventActions';
 
-export default function EventForm({
-	setFormOpen,
-	setEvents,
-	createEvent,
-	event,
-	selectedEvent,
-	updateEvent,
-}) {
-	const initialValues = event ?? {
+export default function EventForm({ match, history }) {
+	const dispatch = useDispatch();
+	const selectedEvent = useSelector((state) =>
+		state.event.events.find((e) => e.id === match.params.id)
+	);
+	const initialValues = selectedEvent ?? {
 		title: '',
 		category: '',
 		description: '',
@@ -23,18 +22,21 @@ export default function EventForm({
 	const [values, setValues] = useState(initialValues);
 
 	const handleFOrmSubmit = () => {
-		if (event) {
-			updateEvent({ ...selectedEvent, ...values });
+		if (selectedEvent) {
+			dispatch(updateEvent({ ...selectedEvent, ...values }));
 			return;
 		}
-		createEvent({
-			...values,
-			id: cuid(),
-			hostedBy: 'Bob',
-			attendees: [],
-			hostPhotoURL: '/assets/user.png',
-		});
-		setFormOpen(false);
+		dispatch(
+			createEvent({
+				...values,
+				id: cuid(),
+				hostedBy: 'Bob',
+				attendees: [],
+				hostPhotoURL: '/assets/user.png',
+			})
+		);
+
+		history.push('/events');
 	};
 
 	const handleInputChange = (e) => {
@@ -44,7 +46,7 @@ export default function EventForm({
 
 	return (
 		<Segment clearing>
-			<Header content={event ? 'Edit the event' : 'Create new event'} />
+			<Header content={selectedEvent ? 'Edit the event' : 'Create new event'} />
 			<Form onSubmit={handleFOrmSubmit}>
 				<Form.Field>
 					<input
